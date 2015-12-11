@@ -21,6 +21,10 @@ typedef struct {
     int cs;
     int asso;
     bloc **Cache;
+    int nbrFailReading;
+    int nbrFailWriting;
+    int nbrSuppCache;
+    int nbrCopyInMemoryAfterSuppCache;
 }ModelCache;
 
 
@@ -29,6 +33,10 @@ ModelCache initializeCache (int cs, int asso, int bs) {
     C.cs = cs;
     C.asso = asso;
     C.bs = bs;
+    C.nbrFailReading = 0;
+    C.nbrCopyInMemoryAfterSuppCache = 0;
+    C.nbrFailWriting = 0;
+    C.nbrSuppCache = 0;
     int nbrElement = cs / (asso*bs);
     int i, j;
     C.Cache = malloc(nbrElement * sizeof (bloc));
@@ -52,21 +60,41 @@ int getNbCyclePerdu (int bs, int nbDefautLecture, int nbDefautEcriture, int nbLi
 };
 
 // Reading Gestion
-void readData () {
-
+void readData (int index, int tag, ModelCache *C) {
+    int i;
+    int valueOfValidIsZero = 1;
+    int indexOfAssoToReplace = 0;
+    //Loop for to determine in which case we are (+ save util data for the LRU)
+    for (i = 0; i < C->asso; i++) {
+        if (C->Cache[index][i].valid != 0) {
+            valueOfValidIsZero = 0;
+            //Find the index of the LRU
+            if (C->Cache[index][indexOfAssoToReplace].compteur > C->Cache[index][i].compteur) {
+                indexOfAssoToReplace = i;
+            }
+        }
+        //Gérer cas tous 0, tous 1 et quelques 1 libres
+    }
+    if (valueOfValidIsZero) {
+        C->nbrFailReading++;
+        C->Cache[index][0].valid = 1;
+        C->Cache[index][0].tag = tag;
+        C->Cache[index][0].M = 0;
+        C->Cache[index][0].compteur = 0;
+    }
 };
 
 // Writing gestion
-void writeData () {
+void writeData (int index, int tag, ModelCache *C) {
 
 };
 
 // Address analysis
-void addressAnalysis (char car ,char *address, ModelCache C) {
+void addressAnalysis (char car ,char *address, ModelCache *C) {
     int isWrite = 0;
     int addressBase10 = (int)strtol(address, NULL, 16);
-    int numBloc = addressBase10 / C.bs;
-    int nbrEntree = C.cs / (C.bs * C.asso);
+    int numBloc = addressBase10 / C->bs;
+    int nbrEntree = C->cs / (C->bs * C->asso);
     int index = numBloc % nbrEntree;
     int tag = numBloc / nbrEntree;
 
@@ -76,10 +104,10 @@ void addressAnalysis (char car ,char *address, ModelCache C) {
     }
     // If it is a writing
     if (isWrite) {
-        writeData();
+        writeData(index, tag, C);
     }
     else { //It is a reading
-        readData();
+        readData(index, tag, C);
     }
 };
 
@@ -100,7 +128,7 @@ void main(int argc, char *argv[]) {
         FILE* tr = fopen(trace, "r");
         while(!feof(tr)) {
             fscanf (tr, "%c%s\n", &car, adre);
-            addressAnalysis(car, adre, C);
+            addressAnalysis(car, adre, &C);
         }
 
     }
