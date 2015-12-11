@@ -43,12 +43,6 @@ ModelCache initializeCache (int cs, int asso, int bs) {
     return C;
 };
 
-<<<<<<< HEAD
-// Reading Gestion
-void readData () {
-
-};
-=======
 int getNbCyclePerdu (int bs, int nbDefautLecture, int nbDefautEcriture, int nbLigneSupprDuCache)
 {
 	//Pénalité d’un défaut = (12 + bs/8) cycles
@@ -57,22 +51,10 @@ int getNbCyclePerdu (int bs, int nbDefautLecture, int nbDefautEcriture, int nbLi
     return (12 + bs/8) * (nbDefautLecture + nbDefautEcriture + nbLigneSupprDuCache);
 };
 
-void main(int argc, char *argv[]) {
-    /*int cs;
-    int bs;
-    int asso;
-    char trace[50];
-    printf("Donnez dans un premier temps les données que nous allons utiliser\n");
-    printf("Quelle est la taille du cache ? \n");
-    scanf("%d", &cs);
-    printf("Quelle est la taille d'un bloc ? \n");
-    scanf("%d", &bs);
-    printf("Quel est le degré d'associativité du cache ? \n");
-    scanf("%d", &asso);
-    printf("Dans quel fichier se trouve la trace à tester ? \n");
-    scanf("%s", trace);
-    int test = ((int)'D' + (int)'Q')%4;
->>>>>>> 0bcbc7d5229da920dbbe633cdc52e79f833d9164
+// Reading Gestion
+void readData () {
+
+};
 
 // Writing gestion
 void writeData () {
