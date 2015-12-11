@@ -34,6 +34,14 @@ Cache initialiser (int cs, int asso) {
     return C;
 };
 
+int getNbCyclePerdu (int bs, int nbDefautLecture, int nbDefautEcriture, int nbLigneSupprDuCache)
+{
+	//Pénalité d’un défaut = (12 + bs/8) cycles
+	//Cycles perdu par la mémoire =
+	// nombre de cycles dues à la pénalité des défauts * (nombre défauts lecture + nombre défauts écriture + nombre de lignes supprimées du cache)
+    return (12 + bs/8) * (nbDefautLecture + nbDefautEcriture + nbLigneSupprDuCache);
+};
+
 void main(int argc, char *argv[]) {
     /*int cs;
     int bs;
