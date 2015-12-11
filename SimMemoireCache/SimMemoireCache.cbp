@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="4096 32 2 test.txt" />
+				<Option parameters="4096 32 2 adresses.txt" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -32,7 +32,7 @@
 		<Compiler>
 			<Add option="-Wall" />
 		</Compiler>
-		<Unit filename="../memoireCache.c">
+		<Unit filename="../simCache149.c">
 			<Option compilerVar="CC" />
 		</Unit>
 		<Extensions>

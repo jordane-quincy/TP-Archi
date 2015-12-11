@@ -10,7 +10,7 @@
 
 typedef struct s {
     int valid;
-    double tag;
+    int tag;
     //On a besoin d'un compteur pour gérer le LRU
     int compteur;
     int M;
@@ -25,6 +25,8 @@ typedef struct {
     int nbrFailWriting;
     int nbrSuppCache;
     int nbrCopyInMemoryAfterSuppCache;
+    int nbrHitReading;
+    int nbrHitWriting;
 }ModelCache;
 
 
@@ -37,6 +39,8 @@ ModelCache initializeCache (int cs, int asso, int bs) {
     C.nbrCopyInMemoryAfterSuppCache = 0;
     C.nbrFailWriting = 0;
     C.nbrSuppCache = 0;
+    C.nbrHitReading = 0;
+    C.nbrHitWriting = 0;
     int nbrElement = cs / (asso*bs);
     int i, j;
     C.Cache = malloc(nbrElement * sizeof (bloc));
@@ -46,6 +50,7 @@ ModelCache initializeCache (int cs, int asso, int bs) {
     for (i = 0; i < nbrElement; i++) {
         for (j = 0; j < asso; j++) {
             C.Cache[i][j].valid = 0;
+            C.Cache[i][j].tag = -1;
         }
     }
     return C;
@@ -60,34 +65,94 @@ int getNbCyclePerdu (int bs, int nbDefautLecture, int nbDefautEcriture, int nbLi
 };
 
 // Reading Gestion
-void readData (int index, int tag, ModelCache *C) {
+void addressTreatment (int index, int tag, ModelCache *C, int isWrite) {
     int i;
-    int valueOfValidIsZero = 1;
-    int indexOfAssoToReplace = 0;
+    //allZero vaut 1 si tout les bits valid à chaque bloc de l'index vaut 0, allZero vaut 0 sinon
+    int allZero = 1;
+    //indexToReplaceLRU va prendre la valeur de l'index(j) à remplacer si tous les bits valid valent 1 et qu'aucun tag ne correspond (il n'est donc pas toujours utilisé)
+    int indexToReplaceLRU = 0;
+    //indexToReplace va prendre la valeur de l'index(j) à remplacer si les tags ne correspond pas et si il y a au moins un bit valid à 0 (dans ce cas on utilise pas le LRU)
+    int indexToReplace = -1;
+    //tagFounded vaut 0 si on ne trouve pas le tag déjà présent, 1 sinon
+    int tagFounded = 0;
+    //indexTagFounded prend la valeur de l'index(j) si un bloc a le même tag que celui à lire (afin d'incrémenter le compteur pour le LRU)
+    int indexTagFounded = -1;
     //Loop for to determine in which case we are (+ save util data for the LRU)
     for (i = 0; i < C->asso; i++) {
-        if (C->Cache[index][i].valid != 0) {
-            valueOfValidIsZero = 0;
+        if (C->Cache[index][i].valid == 0) {
+                indexToReplace = i;
+        }
+        else {
+            //There is one valid bit set to 1
+            allZero = 0;
             //Find the index of the LRU
-            if (C->Cache[index][indexOfAssoToReplace].compteur > C->Cache[index][i].compteur) {
-                indexOfAssoToReplace = i;
+            if (C->Cache[index][indexToReplaceLRU].compteur > C->Cache[index][i].compteur) {
+                indexToReplaceLRU = i;
+            }
+            //Check if the tag is the same
+            if (C->Cache[index][i].tag == tag) {
+                tagFounded = 1;
+                indexTagFounded = i;
             }
         }
-        //Gérer cas tous 0, tous 1 et quelques 1 libres
     }
-    if (valueOfValidIsZero) {
+    //Manage the cache memory
+    //Case when all valid bit are 0
+    if (allZero) {
         C->nbrFailReading++;
-        C->Cache[index][0].valid = 1;
-        C->Cache[index][0].tag = tag;
-        C->Cache[index][0].M = 0;
-        C->Cache[index][0].compteur = 0;
+        C->Cache[index][indexToReplace].valid = 1;
+        C->Cache[index][indexToReplace].tag = tag;
+        C->Cache[index][indexToReplace].M = 0;
+        C->Cache[index][indexToReplace].compteur = 0;
+    }
+    else {
+        if (tagFounded) { //It is a hit !
+            if (isWrite) {
+                C->nbrHitWriting++;
+            }
+            else {
+                C->nbrHitReading++;
+            }
+            C->Cache[index][indexTagFounded].compteur++;
+            if (isWrite) {
+                C->Cache[index][indexTagFounded].M = 1;
+            }
+        }
+        else if (indexToReplace >= 0) { //There is at least one valid bit sets to 0
+            if (isWrite) {
+                C->Cache[index][indexTagFounded].M = 1;
+                C->nbrFailWriting++;
+            }
+            else {
+                C->nbrFailReading++;
+            }
+            C->Cache[index][indexToReplace].valid = 1;
+            C->Cache[index][indexToReplace].tag = tag;
+            C->Cache[index][indexToReplace].M = 0;
+            C->Cache[index][indexToReplace].compteur = 0;
+
+        }
+        else { //All valid bits are 1 and it is a fail so use LRU and replace one bloc
+            C->nbrSuppCache++;
+            if (isWrite) {
+                C->Cache[index][indexTagFounded].M = 1;
+                C->nbrFailWriting++;
+            }
+            else {
+                C->nbrFailReading++;
+            }
+            if (C->Cache[index][indexToReplaceLRU].M) {
+                C->nbrCopyInMemoryAfterSuppCache++;
+            }
+            C->Cache[index][indexToReplaceLRU].valid = 1;
+            C->Cache[index][indexToReplaceLRU].tag = tag;
+            C->Cache[index][indexToReplaceLRU].M = 0;
+            C->Cache[index][indexToReplaceLRU].compteur = 0;
+
+        }
     }
 };
 
-// Writing gestion
-void writeData (int index, int tag, ModelCache *C) {
-
-};
 
 // Address analysis
 void addressAnalysis (char car ,char *address, ModelCache *C) {
@@ -102,13 +167,7 @@ void addressAnalysis (char car ,char *address, ModelCache *C) {
     if (car == "W")  {
         isWrite = 1;
     }
-    // If it is a writing
-    if (isWrite) {
-        writeData(index, tag, C);
-    }
-    else { //It is a reading
-        readData(index, tag, C);
-    }
+    addressTreatment(index, tag, C, isWrite);
 };
 
 void main(int argc, char *argv[]) {
@@ -130,6 +189,7 @@ void main(int argc, char *argv[]) {
             fscanf (tr, "%c%s\n", &car, adre);
             addressAnalysis(car, adre, &C);
         }
+        printf("nbr Fail : %d", C.nbrFailReading+C.nbrFailWriting);
 
     }
 }
