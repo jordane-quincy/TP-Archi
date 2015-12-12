@@ -10,7 +10,7 @@
 
 typedef struct s {
     int valid;
-    int tag;
+    double tag;
     //On a besoin d'un compteur pour gérer le LRU
     int compteur;
     int M;
@@ -50,7 +50,7 @@ ModelCache initializeCache (int cs, int asso, int bs) {
     for (i = 0; i < nbrElement; i++) {
         for (j = 0; j < asso; j++) {
             C.Cache[i][j].valid = 0;
-            C.Cache[i][j].tag = -1;
+            C.Cache[i][j].tag = (double)-1;
         }
     }
     return C;
@@ -65,7 +65,7 @@ int getNbCyclePerdu (int bs, int nbDefautLecture, int nbDefautEcriture, int nbLi
 };
 
 // Reading Gestion
-void addressTreatment (int index, int tag, ModelCache *C, int isWrite) {
+void addressTreatment (int index, double tag, ModelCache *C, int isWrite) {
     int i;
     //allZero vaut 1 si tout les bits valid à chaque bloc de l'index vaut 0, allZero vaut 0 sinon
     int allZero = 1;
@@ -99,48 +99,45 @@ void addressTreatment (int index, int tag, ModelCache *C, int isWrite) {
     //Manage the cache memory
     //Case when all valid bit are 0
     if (allZero) {
-        C->nbrFailReading++;
         C->Cache[index][indexToReplace].valid = 1;
         C->Cache[index][indexToReplace].tag = tag;
         C->Cache[index][indexToReplace].M = 0;
         C->Cache[index][indexToReplace].compteur = 0;
+        if (isWrite) {
+            C->nbrFailWriting++;
+            C->Cache[index][indexToReplace].M = 1;
+        }
+        else {
+            C->nbrFailReading++;
+        }
     }
     else {
         if (tagFounded) { //It is a hit !
+            C->Cache[index][indexTagFounded].compteur++;
             if (isWrite) {
                 C->nbrHitWriting++;
+                C->Cache[index][indexTagFounded].M = 1;
             }
             else {
                 C->nbrHitReading++;
             }
-            C->Cache[index][indexTagFounded].compteur++;
-            if (isWrite) {
-                C->Cache[index][indexTagFounded].M = 1;
-            }
         }
         else if (indexToReplace >= 0) { //There is at least one valid bit sets to 0
-            if (isWrite) {
-                C->Cache[index][indexTagFounded].M = 1;
-                C->nbrFailWriting++;
-            }
-            else {
-                C->nbrFailReading++;
-            }
             C->Cache[index][indexToReplace].valid = 1;
             C->Cache[index][indexToReplace].tag = tag;
             C->Cache[index][indexToReplace].M = 0;
             C->Cache[index][indexToReplace].compteur = 0;
-
-        }
-        else { //All valid bits are 1 and it is a fail so use LRU and replace one bloc
-            C->nbrSuppCache++;
             if (isWrite) {
-                C->Cache[index][indexTagFounded].M = 1;
+                C->Cache[index][indexToReplace].M = 1;
                 C->nbrFailWriting++;
             }
             else {
                 C->nbrFailReading++;
             }
+
+        }
+        else { //All valid bits are 1 and it is a fail so use LRU and replace one bloc
+            C->nbrSuppCache++;
             if (C->Cache[index][indexToReplaceLRU].M) {
                 C->nbrCopyInMemoryAfterSuppCache++;
             }
@@ -148,7 +145,13 @@ void addressTreatment (int index, int tag, ModelCache *C, int isWrite) {
             C->Cache[index][indexToReplaceLRU].tag = tag;
             C->Cache[index][indexToReplaceLRU].M = 0;
             C->Cache[index][indexToReplaceLRU].compteur = 0;
-
+            if (isWrite) {
+                C->Cache[index][indexTagFounded].M = 1;
+                C->nbrFailWriting++;
+            }
+            else {
+                C->nbrFailReading++;
+            }
         }
     }
 };
@@ -161,10 +164,9 @@ void addressAnalysis (char car ,char *address, ModelCache *C) {
     int numBloc = addressBase10 / C->bs;
     int nbrEntree = C->cs / (C->bs * C->asso);
     int index = numBloc % nbrEntree;
-    int tag = numBloc / nbrEntree;
-
+    double tag = (double)numBloc / nbrEntree;
     // Check if it is a reading or a writing
-    if (car == "W")  {
+    if (car == 'W')  {
         isWrite = 1;
     }
     addressTreatment(index, tag, C, isWrite);
@@ -183,13 +185,17 @@ void main(int argc, char *argv[]) {
         char car;
         char adre[8];
         ModelCache C = initializeCache(cs, asso, bs);
-        printf("Les donnees sont : %d %d %d %s\n", cs, bs, asso, trace);
+        printf("Les donnees sont :\nTaille de la memoire cache : %d\nTaille d'un bloc : %d\nDegre d'associativite : %d\nNom du fichier analyse : %s\n", cs, bs, asso, trace);
         FILE* tr = fopen(trace, "r");
         while(!feof(tr)) {
             fscanf (tr, "%c%s\n", &car, adre);
             addressAnalysis(car, adre, &C);
         }
-        printf("nbr Fail : %d", C.nbrFailReading+C.nbrFailWriting);
+        printf("\nResultats apres l'analyse du fichier d'addresses :\n");
+        printf("\nnbr Fail : %d\n", C.nbrFailReading+C.nbrFailWriting);
+        printf("nbr succes : %d\n", C.nbrHitReading + C.nbrHitWriting);
+        printf("Compy in memory : %d \n", C.nbrCopyInMemoryAfterSuppCache);
+        printf("Nbr de supp : %d \n", C.nbrSuppCache);
 
     }
 }
