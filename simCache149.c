@@ -6,8 +6,6 @@
 
 #include <stdlib.h>
 #include <stdio.h>
-
-
 typedef struct s {
     int valid;
     double tag;
@@ -134,7 +132,6 @@ void addressTreatment (int index, double tag, ModelCache *C, int isWrite) {
             else {
                 C->nbrFailReading++;
             }
-
         }
         else { //All valid bits are 1 and it is a fail so use LRU and replace one bloc
             C->nbrSuppCache++;
@@ -146,7 +143,7 @@ void addressTreatment (int index, double tag, ModelCache *C, int isWrite) {
             C->Cache[index][indexToReplaceLRU].M = 0;
             C->Cache[index][indexToReplaceLRU].compteur = 0;
             if (isWrite) {
-                C->Cache[index][indexTagFounded].M = 1;
+                C->Cache[index][indexToReplaceLRU].M = 1;
                 C->nbrFailWriting++;
             }
             else {
@@ -160,8 +157,8 @@ void addressTreatment (int index, double tag, ModelCache *C, int isWrite) {
 // Address analysis
 void addressAnalysis (char car ,char *address, ModelCache *C) {
     int isWrite = 0;
-    int addressBase10 = (int)strtol(address, NULL, 16);
-    int numBloc = addressBase10 / C->bs;
+    long addressBase10 = (long)strtol(address, NULL, 16);
+    long numBloc = addressBase10 / C->bs;
     int nbrEntree = C->cs / (C->bs * C->asso);
     int index = numBloc % nbrEntree;
     double tag = (double)numBloc / nbrEntree;
@@ -183,12 +180,12 @@ void main(int argc, char *argv[]) {
         int asso = atoi(argv[3]);
         char* trace = argv[4];
         char car;
-        char adre[8];
+        char* adre;
         ModelCache C = initializeCache(cs, asso, bs);
         printf("Les donnees sont :\nTaille de la memoire cache : %d\nTaille d'un bloc : %d\nDegre d'associativite : %d\nNom du fichier analyse : %s\n", cs, bs, asso, trace);
         FILE* tr = fopen(trace, "r");
         while(!feof(tr)) {
-            fscanf (tr, "%c%s\n", &car, adre);
+            fscanf(tr, "%c%s\n", &car, adre);
             addressAnalysis(car, adre, &C);
         }
         printf("\nResultats apres l'analyse du fichier d'addresses :\n");
