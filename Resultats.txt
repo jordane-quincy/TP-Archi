@@ -1,0 +1,5 @@
+Question 3 :
+
+La valeur optimale de bs pour la trace multTrace10x10 est 16 octets.
+La valeur optimale de bs pour la trace mergesort2000Trace est 24 octets.
+La valeur optimale de bs pour la trace multTrace est 8 octets.

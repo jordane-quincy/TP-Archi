@@ -19,12 +19,14 @@ typedef struct {
     int cs;
     int asso;
     bloc **Cache;
-    int nbrFailReading;
-    int nbrFailWriting;
-    int nbrSuppCache;
-    int nbrCopyInMemoryAfterSuppCache;
-    int nbrHitReading;
-    int nbrHitWriting;
+    long nbrFailReading;
+    long nbrFailWriting;
+    long nbrSuppCache;
+    long nbrCopyInMemoryAfterSuppCache;
+    long nbrHitReading;
+    long nbrHitWriting;
+    long nbrOfReading;
+    long nbrOfWriting;
 }ModelCache;
 
 
@@ -39,6 +41,8 @@ ModelCache initializeCache (int cs, int asso, int bs) {
     C.nbrSuppCache = 0;
     C.nbrHitReading = 0;
     C.nbrHitWriting = 0;
+    C.nbrOfReading = 0;
+    C.nbrOfWriting = 0;
     int nbrElement = cs / (asso*bs);
     int i, j;
     C.Cache = malloc(nbrElement * sizeof (bloc));
@@ -54,7 +58,7 @@ ModelCache initializeCache (int cs, int asso, int bs) {
     return C;
 };
 
-int getNbCyclePerdu (int bs, int nbDefautLecture, int nbDefautEcriture, int nbLigneSupprDuCache)
+long getNbCyclePerdu (int bs, long nbDefautLecture, long nbDefautEcriture, long nbLigneSupprDuCache)
 {
 	//Pénalité d’un défaut = (12 + bs/8) cycles
 	//Cycles perdu par la mémoire =
@@ -75,6 +79,12 @@ void addressTreatment (int index, double tag, ModelCache *C, int isWrite) {
     int tagFounded = 0;
     //indexTagFounded prend la valeur de l'index(j) si un bloc a le même tag que celui à lire (afin d'incrémenter le compteur pour le LRU)
     int indexTagFounded = -1;
+    if (isWrite) {
+        C->nbrOfWriting++;
+    }
+    else {
+        C->nbrOfReading++;
+    }
     //Loop for to determine in which case we are (+ save util data for the LRU)
     for (i = 0; i < C->asso; i++) {
         if (C->Cache[index][i].valid == 0) {
@@ -182,17 +192,18 @@ void main(int argc, char *argv[]) {
         char car;
         char* adre;
         ModelCache C = initializeCache(cs, asso, bs);
-        printf("Les donnees sont :\nTaille de la memoire cache : %d\nTaille d'un bloc : %d\nDegre d'associativite : %d\nNom du fichier analyse : %s\n", cs, bs, asso, trace);
+        printf("Les donnees sont :\nTaille de la memoire cache : %d octets\nTaille d'un bloc : %d octets\nDegre d'associativite : %d\nNom du fichier analyse : %s\n", cs, bs, asso, trace);
         FILE* tr = fopen(trace, "r");
         while(!feof(tr)) {
             fscanf(tr, "%c%s\n", &car, adre);
             addressAnalysis(car, adre, &C);
         }
         printf("\nResultats apres l'analyse du fichier d'addresses :\n");
-        printf("\nnbr Fail : %d\n", C.nbrFailReading+C.nbrFailWriting);
-        printf("nbr succes : %d\n", C.nbrHitReading + C.nbrHitWriting);
-        printf("Compy in memory : %d \n", C.nbrCopyInMemoryAfterSuppCache);
-        printf("Nbr de supp : %d \n", C.nbrSuppCache);
-
+        printf("Nombre de lectures : %ld\nNbr d'ecritures %ld", C.nbrOfReading, C.nbrOfWriting);
+        printf("\nnbr Fail : %ld\n", C.nbrFailReading+C.nbrFailWriting);
+        printf("nbr succes : %ld\n", C.nbrHitReading + C.nbrHitWriting);
+        printf("Compy in memory : %ld \n", C.nbrCopyInMemoryAfterSuppCache);
+        printf("Nbr de supp : %ld \n", C.nbrSuppCache);
+        printf("Valeur cycle perdu %ld\n", getNbCyclePerdu(bs, C.nbrFailReading, C.nbrFailWriting, C.nbrCopyInMemoryAfterSuppCache));
     }
 }
