@@ -1,6 +1,10 @@
 # depslib dependency file v1.0
-1450433509 source:c:\users\jean-baptiste\onedrive\documents\master 1\cours\programmation et architecture\tp\git2\openmp\main.c
+1450434362 source:c:\users\jean-baptiste\onedrive\documents\master 1\cours\programmation et architecture\tp\git2\openmp\main.c
 	<stdio.h>
 	<stdlib.h>
+	<omp.h>
+
+1450434648 source:c:\users\jean-baptiste\onedrive\documents\master 1\cours\programmation et architecture\tp\git2\openmp\part2.c
+	<stdio.h>
 	<omp.h>
 
