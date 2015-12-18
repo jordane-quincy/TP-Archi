@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
-#define N 10
+#define N 40
 
 
 
@@ -29,25 +29,26 @@ int main()
 	C = initialiser(N);
 	int nbTh = 4;
     int t, i, j, k;
-    t = 2;
+    t = 4;
 	//ajouter un for ici pour faire varier entre 1 et 4 cores
-        omp_set_dynamic(0);
-        omp_set_num_threads(2);
-        t_debut = omp_get_wtime();
+    omp_set_dynamic(0);
+    omp_set_num_threads(t);
+    t_debut = omp_get_wtime();
+    #pragma omp parallel for
+    for(i=0; i<N; i++){
         printf("nbr de thread : %d\n", omp_get_num_threads());
-        #pragma omp parallel for
-        for(i=0; i<N; i++){
-                printf("test\n");
-            for(j=0; j<N; j++){
-                C[i][j] = 0;
-                for(k=0; k<N; k++){
-                    C[i][j] += A[i][k] * B[k][j];
-                    t_fin = omp_get_wtime();
-                    t_exec = t_fin - t_debut;
-                    //printf("%d %lf\n", t,t_exec);
-                }
+        printf("test\n");
+        for(j=0; j<N; j++){
+            C[i][j] = 0;
+            for(k=0; k<N; k++){
+                C[i][j] += A[i][k] * B[k][j];
+                t_fin = omp_get_wtime();
+                t_exec = t_fin - t_debut;
+                //printf("%d %lf\n", t,t_exec);
             }
         }
+    }
+
     printf("\n");
     for (i = 0; i < N; i++) {
         for (j = 0; j < N; j++) {
