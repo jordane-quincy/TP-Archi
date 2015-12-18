@@ -5,10 +5,14 @@ Objectif :
 Mesurer le temps d'execution de la MM avec un nombre de threads de 1 à 8 en utilisant 1 à 4 cores.
 
 Duriez et Quincy : binome 6
-mdp : duriez26 --> duriez36
-mdp : quincy26 --> quincy36
+mdp : bin36
+
+ssh bin36@intel.univ-valenciennes.fr
+password : bin36 --> tparchi2
+pour changer le mot de passe, commande : passwd 
 
 
+// Partie I
 #include omp.h
 #define n 10000
 
@@ -50,3 +54,85 @@ int main()
 			}
 		}
 }
+
+Partie 2 : Calcul de PI
+Voir programme donné dans les slides du cours
+Objectif :
+* varier le nombre de thread, de cores
+* varier le nombre d'intervalles
+// Partie II
+#include <stdio.h>
+#include <omp.h>
+//#define NUMSTEPS 10
+#define NUM_THREADS 2 
+int main (int argc, const char * argv[]) 
+{
+	static long num_steps = 10000000000;
+		int i, nthreads; 
+		double pi;
+		double step;
+		double x;
+		double sum = 0.0;
+		step =(1.0/ (double) num_steps);
+/******************** SERIE *********/
+		//x = 0.5 * step;
+	omp_set_num_threads(4);
+	
+	double wtime;
+	
+	wtime = omp_get_wtime ();
+	
+#pragma omp parallel for reduction (+:sum)	private (x)
+	//{
+	//printf("\n Nombre de proc=%d, Nombre de threads=%d\n", omp_get_num_procs(), omp_get_num_threads());
+//#pragma omp for reduction (+:sum)	private (x)
+	for (i=0;i<= num_steps; i++)
+	{
+		x = (double) ((double)i + 0.5) *  step;
+		sum += 4.0/(1.0+x*x);
+		//printf("\n Thread=%d, i=%d, x=%f, sum=%f", omp_get_thread_num(), i, x, sum);
+
+	}
+	//}
+	
+	
+	pi = step * sum;
+	wtime=omp_get_wtime()-wtime;
+	printf ( " Elapsed wall clock time = %f with %ld steps\n", 
+			wtime, num_steps );
+	
+	
+		
+	printf(" \n Calcul Serie Pi = %f\n", pi);
+
+}
+
+
+
+########################################## 
+Ajouter dans filezilla : 
+Hote : intel.univ-valenciennes.fr
+Protocole : SFTP
+Type d'auth : Normale
+identifiant : bin36
+
+
+############## dans putty (se connecter à l'hote : intel.univ-valenciennes.fr) :
+login as: bin36
+bin36@intel.univ-valenciennes.fr's password:
+
+bin36@intel:~$ pwd
+/home/bin36
+bin36@intel:~$ cd tpArchi/
+bin36@intel:~/tpArchi$ ls
+main.c
+bin36@intel:~/tpArchi$ gcc main.c -fopenmp
+bin36@intel:~/tpArchi$ ls
+a.out  main.c
+bin36@intel:~/tpArchi$ ./a.out
+nbr de thread : 1
+test
+test
+test
+test
+Erreur de segmentation
