@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <omp.h>
-#define N 1000
+#define N 100
 
 typedef float **Matrice;
 
@@ -25,19 +25,23 @@ int main()
 	A = initialiser(N);
 	B = initialiser(N);
 	C = initialiser(N);
-	int nbTh = 16;
+	int nbTh = 4;
 	int tailleMatrice = N;
-    int i, t, j, k;
+    int t, i, j, k;
 	//ajouter un for ici pour faire varier entre 1 et 4 cores
     t_debut = omp_get_wtime();
     for(t = 1; t <= nbTh; t++){
         omp_set_num_threads(t);
+
         t_debut = omp_get_wtime();
-		#pragma omp parallel for private(j, k)
+		#pragma omp parallel for
         for(i = 0; i < tailleMatrice; i++){
+            if (i = tailleMatrice -1) printf("numThread %d -> %d\n", omp_get_thread_num(), tailleMatrice);
             for(j = 0; j < tailleMatrice; j++){
                 C[i][j] = 0;
                 for(k = 0; k < tailleMatrice; k++){
+                    //printf("A[%d][%d] * B[%d][%d] = %lf", i,k,k,j,A[i][k] * B[k][j]);
+                    //printf(", C[%d][%d] \n", i,j);
                     C[i][j] = C[i][j] + (A[i][k] * B[k][j]);
                 }
             }
@@ -46,5 +50,14 @@ int main()
         t_exec = t_fin - t_debut;
         printf("%d thread : temps exec : %lf\n", t, t_exec);
     }
+
+
+    /*printf("\n");
+    for (i = 0; i < N; i++) {
+        for (j = 0; j < N; j++) {
+            printf("%.2f    ", C[i][j]);
+        }
+        printf("\n");
+    }*/
     return 0;
 };
