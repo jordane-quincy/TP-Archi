@@ -25,7 +25,7 @@ int main()
 	A = initialiser(N);
 	B = initialiser(N);
 	C = initialiser(N);
-	int nbTh = 16;
+	int nbTh = 2;
 	int tailleMatrice = N;
     int i, t, j, k;
 	//ajouter un for ici pour faire varier entre 1 et 4 cores
@@ -33,7 +33,7 @@ int main()
     for(t = 1; t <= nbTh; t++){
         omp_set_num_threads(t);
         t_debut = omp_get_wtime();
-		#pragma omp parallel for private(j, k)
+        #pragma omp parallel for private(j, k)
         for(i = 0; i < tailleMatrice; i++){
             for(j = 0; j < tailleMatrice; j++){
                 C[i][j] = 0;
@@ -44,7 +44,7 @@ int main()
         }
         t_fin = omp_get_wtime();
         t_exec = t_fin - t_debut;
-        printf("%d thread : temps exec : %lf\n", t, t_exec);
+        printf("%d\t%lf\n", t, t_exec);
     }
     return 0;
 };
