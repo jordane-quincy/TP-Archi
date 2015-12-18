@@ -1,0 +1,52 @@
+TP 2 : Open MP
+
+Partie 1 : Multiplication de Matrices (MM)
+Objectif :
+Mesurer le temps d'execution de la MM avec un nombre de threads de 1 à 8 en utilisant 1 à 4 cores.
+
+Duriez et Quincy : binome 6
+mdp : duriez26 --> duriez36
+mdp : quincy26 --> quincy36
+
+
+#include omp.h
+#define n 10000
+
+float ** initialiser(int n)
+{
+	int i;
+	float ** mat;
+	mat = (float**) malloc(n* sizeof(float *);
+	for(i=o;i<n;i++){
+		mat[i] = (float*) malloc(n* sizeof(float *);
+	}
+}
+
+int main()
+{
+	float ** A,B,C;
+	double t_debut,t_fin,t_exec;
+	A = initialiser(n);
+	B = initialiser(n);
+	C = initialiser(n);
+	
+	//ajouter un for ici pour faire varier entre 1 et 4 cores 
+		for(t=1; t <= nbTh; t++){
+			omp_set_num_threads(t)
+			t_debut = omp_wtime();
+			
+			#pragma omp parallel for
+			for(i=0; i<n; i++){
+				for(j=0; j<n; j++){
+					C[i][j] = 0;
+					
+					for(k=0; k<n; k++){
+						C[i][j] += A[i][k] * B[k][j];
+						 t_fin = omp_wtime();
+						 t_exec = t_fin - t_debut;
+						 printf("%d %d", t,t_exec);
+					}
+				}
+			}
+		}
+}
