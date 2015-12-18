@@ -164,6 +164,7 @@ void addressTreatment (int index, double tag, ModelCache *C, int isWrite) {
 };
 
 
+
 // Address analysis
 void addressAnalysis (char car ,char *address, ModelCache *C) {
     int isWrite = 0;
