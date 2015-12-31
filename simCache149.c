@@ -1,6 +1,6 @@
 /*
     TP mémoire cache - Jordane QUINCY et Jean-Baptiste DURIEZ
-    Etat : Travail en cours
+    Etat : Fini
     Code : 'D' + 'Q' = 68 + 81 = 149, Gestion Ecriture = 149%2 = 1 = WB, Remplacement des blocs = 149%4 = 1 = LRU
 */
 
@@ -182,17 +182,12 @@ void addressAnalysis (char car ,long address, ModelCache *C) {
 };
 
 double calculTempsExec(ModelCache *C){
-    printf("%d\n", C->asso);
-    printf("log : %lf\n", log2(C->asso));
     double nbrDeHit = (C->nbrHitReading + C->nbrHitWriting) * 40/100;
     double nbrDeMiss = (C->nbrFailReading + C->nbrFailWriting) * 40/100;
-    printf("le calcul : %lf * (10 + log2(%d)) + %lf * 20 * (10 + log2(%d))\n", nbrDeHit, C->asso, nbrDeMiss, C->asso);
     return (nbrDeHit * (10 + log2(C->asso))) + (nbrDeMiss * 20 * (10 + log2(C->asso)));
 }
 
 void main(int argc, char *argv[]) {
-    //Ceci fait tout crasher
-    int i = 0;
     //Test the number of arguments
     if (argc != 5) {
         printf("Le nombre d'arguments est invalide, il doit etre egal à 5 !!\n");
@@ -214,7 +209,8 @@ void main(int argc, char *argv[]) {
         fclose(tr);
         printf("\nResultats apres l'analyse du fichier d'addresses :\n");
         printf("Nombre de lectures : %ld\nNbr d'ecritures %ld", C.nbrOfReading, C.nbrOfWriting);
-        printf("\nnbr Fail : %ld\n", C.nbrFailReading+C.nbrFailWriting);
+        printf("\n\nnbr Fail LECTURE : %ld\n", C.nbrFailReading);
+        printf("nbr Fail ECRITURE : %ld\n\n", C.nbrFailWriting);
         printf("nbr succes : %ld\n", C.nbrHitReading + C.nbrHitWriting);
         printf("Compy in memory : %ld \n", C.nbrCopyInMemoryAfterSuppCache);
         printf("Nbr de supp : %ld \n", C.nbrSuppCache);
@@ -224,7 +220,5 @@ void main(int argc, char *argv[]) {
         double tempsExecInfini = nbrInstruction * 10;
         printf("temps exec taille infinie : %lf ns\n", tempsExecInfini);
         printf("tmps exec : %lf\n", calculTempsExec(&C));
-
-
     }
 }
